@@ -19,10 +19,16 @@ public class SearchActor extends AbstractActor {
     private final SearchHistoryModel shModel;
     private final Set<String> receivedVideoIds = new HashSet<>();
     private ActorRef videoQueryActor;
+    private ActorRef sentimentActor;
 
     public SearchActor(ActorRef out, SearchHistoryModel shModel) {
         this.out = out;
         this.shModel = shModel;
+    }
+
+    @Override
+    public void preStart(){
+        sentimentActor = getContext().actorOf(SubmissionSentimentActor.props());
     }
 
     @Override
@@ -42,8 +48,22 @@ public class SearchActor extends AbstractActor {
                     }
                 })
                 .match(SearchResult.class, this::handleVideoResults)
-//
+                .match(SubmissionSentimentActor.SentimentResult.class,
+                        result -> updateSearchSummary(result.getSentiment()))
                 .build();
+    }
+
+    /**
+     * @author Tomas Pereira
+     * @param sentiment The sentiment result string for the set of videos that has been processed.
+     *
+     * After receiving a sentiment result message, the SearchActor sends it up to be displayed
+     */
+    private void updateSearchSummary(String sentiment){
+        ObjectNode summaryUpdate = Json.newObject();
+        summaryUpdate.put("type", "summary");
+        summaryUpdate.put("sentiment", sentiment);
+        out.tell(summaryUpdate, self());
     }
 
     private void handleSearchQuery(String query) {
@@ -65,6 +85,9 @@ public class SearchActor extends AbstractActor {
                 out.tell(response, self());
             }
         }
+
+        // After getting the list, send a message to process the sentiment
+        sentimentActor.tell(new SubmissionSentimentActor.AnalyzeSentiment(message.videos), self());
     }
 
 

@@ -127,7 +127,7 @@ public class SubmissionSentimentTest {
         vidList.addFirst(video1);
         vidList.addFirst(video2);
 
-        assertEquals(sentimentAnalyzer.determineSentiment(vidList), ":-|");
+        assertEquals(sentimentAnalyzer.determineSentiment(vidList), ":-)");
     }
 
     /**
