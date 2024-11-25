@@ -75,7 +75,7 @@ public class SearchController extends Controller {
         // Asynchronously handle the generation of word statistics
         return CompletableFuture.supplyAsync(() -> {
             return generateWordStats(shModel.queryYoutube(query, 50));
-        }).thenApply(Morestats -> ok(views.html.wordstats.render(query, Morestats)));
+        }).thenApply(Morestats -> ok(wordstats.render(query, Morestats)));
     }
 
     /**

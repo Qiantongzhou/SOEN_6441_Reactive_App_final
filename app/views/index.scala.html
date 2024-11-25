@@ -1,5 +1,51 @@
-@()
+@import models.Video
+@import models.SearchResult
 
-@main("Welcome to Play") {
-  <h1>Welcome to Play!</h1>
-}
+@(searchHistory: LinkedList[SearchResult])
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>YouTube Video</title>
+  </head>
+  <body>
+
+    <h1>Welcome to YT Lytics</h1>
+    <h2>Enter Search Terms</h2>
+
+    <form action="/search/searchVideos" method="get">
+      <input type="text" name="query" placeholder="Enter keywords" required>
+      <button type="submit">Search</button>
+    </form>
+
+    @for(searchResult <- searchHistory) {
+      <div>
+        <h2>
+            Search Terms: "@searchResult.query" @searchResult.sentiment <a href="@routes.SearchController.MoreStats(searchResult.query)"> morestats </a>
+        </h2>
+        <ol>
+        @for(video <- searchResult.videos.take(10)) {
+          <li>
+              <b>Title: </b>
+              <a href="https://www.youtube.com/watch?v=@video.getVideoId">
+                @video.getTitle
+              </a>
+              <b>Channel: </b>
+              <a href="@routes.SearchController.showChannelProfile(video.getChannelId)">
+                @video.getChannelTitle
+              </a>
+              <b>Description: </b>
+                "@video.getDescription"
+              <a href="">  Tags </a>
+          </li>
+            <img src="@video.getThumbnail" alt="Video's Thumbnail">
+
+        }
+        </ol>
+      </div>
+      <hr>
+      }
+
+  </body>
+</html>
