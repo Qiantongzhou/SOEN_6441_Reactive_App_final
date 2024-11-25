@@ -78,6 +78,41 @@ public class SearchHistoryModel {
         return videos;
     }
 
+    public List<Video> queryYoutubewithnum(String query,int num){
+
+        List<Video> videos = new ArrayList<>();
+
+        try {
+            JsonNode videosJson = youtubeApiClient.searchVideos(query, num);
+
+            for (JsonNode item : videosJson.get("items")) {
+                try {
+                    Video video = new Video(
+                            item.get("id").get("videoId").asText(),
+                            item.get("snippet").get("title").asText(),
+                            item.get("snippet").get("channelId").asText(),
+                            item.get("snippet").get("channelTitle").asText(),
+                            item.get("snippet").get("description").asText(),
+                            item.get("snippet").get("thumbnails").get("default").get("url").asText()
+                    );
+                    videos.add(video);
+                }
+                catch (Exception e){
+                    System.err.println("Error in Extracting from Video:" + e);
+
+                }
+            }
+
+        } catch (IOException e) {
+            System.err.println("Network error: " + e.getMessage());
+        } catch (RuntimeException e) {
+            System.err.println("Error with API response: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Other Error: " + e.getMessage());
+        }
+        return videos;
+    }
+
     /**
      * @author Tongzhou Qian
      *

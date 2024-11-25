@@ -1,58 +1,87 @@
-//package Actors;
-//
-//import akka.actor.AbstractActor;
-//import akka.actor.Props;
-//import akka.actor.ActorRef;
-//import models.SearchHistoryModel;
-//
-//import java.util.HashSet;
-//import java.util.Set;
-//
-//public class SearchActor extends AbstractActor {
-//    private final String query;
-//    private final SearchHistoryModel shModel;
-//    private final Set<String> seenResults = new HashSet<>();
-//    private final ActorRef out;
-//
-//    public static Props props(String query, SearchHistoryModel shModel) {
-//        return Props.create(SearchActor.class, () -> new SearchActor(query, shModel));
-//    }
-//
-//    public SearchActor(String query, SearchHistoryModel shModel) {
-//        this.query = query;
-//        this.shModel = shModel;
-//        this.out = getSender();
-//        // Start with the latest 10 results
-//        shModel.queryYoutube(query, 10).forEach(this::sendIfNotSeen);
-//    }
-//
-//    @Override
-//    public Receive createReceive() {
-//        return receiveBuilder()
-//                .match(NewSearchResult.class, this::handleNewSearchResult)
-//                .matchAny(msg -> unhandled(msg))
-//                .build();
-//    }
-//
-//    private void handleNewSearchResult(NewSearchResult result) {
-//        if (!seenResults.contains(result.getVideoId())) {
-//            sendIfNotSeen(result);
-//        }
-//    }
-//
-//    private void sendIfNotSeen(Video video) {
-//        if (seenResults.add(video.getVideoId())) {
-//            out.tell(video.toJson(), getSelf());
-//        }
-//    }
-//
-//    @Override
-//    public void postStop() {
-//        // Cleanup logic if needed
-//    }
-//
-//    public static class Completed {
-//        public static final Completed INSTANCE = new Completed();
-//    }
-//}
+package Actors;
 
+import akka.actor.*;
+import akka.japi.pf.DeciderBuilder;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import models.SearchHistoryModel;
+import models.SearchResult;
+import models.Video;
+import play.libs.Json;
+import scala.concurrent.duration.Duration;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public class SearchActor extends AbstractActor {
+    private final ActorRef out;
+    private final SearchHistoryModel shModel;
+    private final Set<String> receivedVideoIds = new HashSet<>();
+    private ActorRef videoQueryActor;
+
+    public SearchActor(ActorRef out, SearchHistoryModel shModel) {
+        this.out = out;
+        this.shModel = shModel;
+    }
+
+    @Override
+    public Receive createReceive() {
+        return receiveBuilder()
+                .match(JsonNode.class, message -> {
+                    String type = message.get("type").asText();
+                    if ("search".equals(type)) {
+                        String query = message.get("query").asText();
+                        handleSearchQuery(query);
+                    } else if ("channelProfile".equals(type)) {
+                        String channelId = message.get("channelId").asText();
+                        //handleChannelProfile(channelId);
+                    } else if ("wordStats".equals(type)) {
+                        String query = message.get("query").asText();
+                        //handleWordStats(query);
+                    }
+                })
+                .match(SearchResult.class, this::handleVideoResults)
+//
+                .build();
+    }
+
+    private void handleSearchQuery(String query) {
+        if (videoQueryActor != null) {
+            getContext().stop(videoQueryActor);
+        }
+        receivedVideoIds.clear();
+        videoQueryActor = getContext().actorOf(Props.create(VideoQueryActor.class, query, self(), shModel));
+    }
+
+
+    private void handleVideoResults(SearchResult message) {
+        for (Video video : message.videos) {
+            if (!receivedVideoIds.contains(video.getVideoId())) {
+                receivedVideoIds.add(video.getVideoId());
+                ObjectNode response = Json.newObject();
+                response.put("type", "video");
+                response.set("data", Json.toJson(video));
+                out.tell(response, self());
+            }
+        }
+    }
+
+
+
+    @Override
+    public SupervisorStrategy supervisorStrategy() {
+        return new OneForOneStrategy(
+                10,
+                Duration.create("1 minute"),
+                DeciderBuilder.match(Exception.class, e -> SupervisorStrategy.restart()).build()
+        );
+    }
+
+    @Override
+    public void postStop() {
+        if (videoQueryActor != null) {
+            getContext().stop(videoQueryActor);
+        }
+    }
+}
