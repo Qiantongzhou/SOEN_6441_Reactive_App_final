@@ -1,0 +1,45 @@
+@*
+* This template handles the rendering of the channel page. It takes
+* two arguments, a `Channel` object for the available information about a channel
+* and a list of `Video` objects that represent the ten latest videos if they exists.
+*@
+
+@import java.time.format.DateTimeFormatter
+@import java.time.LocalDateTime
+@import java.time.ZoneOffset
+
+@(channel: models.Channel, videos: java.util.List[models.Video])
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Channel Profile: @channel.getTitle()</title>
+</head>
+<body>
+<h1>Channel Profile</h1>
+<h2>@channel.getTitle()</h2>
+<img src="@channel.getThumbnailUrl()" alt="Channel Thumbnail">
+<p>Description: @channel.getDescription()</p>
+<p>Published At: @{
+    val retrievedDate = channel.getPublishedAt()
+    val date = LocalDateTime.parse(retrievedDate.replace("Z", ""))
+    val formatTemplate = DateTimeFormatter.ofPattern("dd MMMM yyyy", java.util.Locale.ENGLISH)
+    date.format(formatTemplate)
+    }</p>
+<p>Country: @channel.getCountry()</p>
+<p>Subscribers: @channel.getSubscriberCount()</p>
+<p>View Count: @channel.getViewCount()</p>
+<p>Video Count: @channel.getVideoCount()</p>
+
+<h2>Latest Videos</h2>
+<ul>
+    @for(video <- videos) {
+    <li>
+        <a href="https://www.youtube.com/watch?v=@video.getVideoId">
+            @video.getTitle()
+        </a>
+    </li>
+    }
+</ul>
+</body>
+</html>
