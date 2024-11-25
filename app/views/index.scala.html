@@ -181,6 +181,9 @@
                             case "video":
                                 displayVideo(message.data);
                                 break;
+                            case "summary":
+                                updateSummary(message.sentiment);
+                                break;
 
                             default:
                                 console.log('Unknown message type:', message.type);
@@ -214,6 +217,11 @@
                         query: query
                     };
                     socket.send(JSON.stringify(searchMessage));
+                }
+
+                function updateSummary(sentiment){
+                    var summary = document.getElementById('searchSummary');
+                    summary.innerHTML = `Search Terms: "${document.getElementById('searchInput').value}" ${sentiment} (More Stats. WIP)`;
                 }
 
                 function displayVideo(video) {

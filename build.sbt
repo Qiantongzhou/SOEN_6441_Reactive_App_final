@@ -25,3 +25,5 @@ libraryDependencies ++= Seq(
   "org.junit.jupiter" % "junit-jupiter-api" % "5.9.2" % Test,  // JUnit 5 API
   "org.junit.jupiter" % "junit-jupiter-engine" % "5.9.2" % Test // JUnit 5 Engine
 )
+
+libraryDependencies += "com.typesafe.akka" %% "akka-actor-testkit-typed" % "2.6.21" % Test
