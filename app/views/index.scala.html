@@ -150,6 +150,7 @@
             <button onclick="startSearch()">Search</button>
         </div>
 
+        <div id="searchSummary"></div>
         <div id="videoContainer"></div>
 
         <footer>
@@ -203,7 +204,10 @@
                     }
 
                     document.getElementById('videoContainer').innerHTML = '';
+                    document.getElementById('searchSummary').innerHTML = '';
                     receivedVideoIds.clear();
+
+                    document.getElementById('searchSummary').innerText = `Search Terms: "${query}" (Sentiment. WIP) (More Stats. WIP)`
 
                     var searchMessage = {
                         type: 'search',
