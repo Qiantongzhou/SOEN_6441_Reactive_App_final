@@ -137,6 +137,86 @@
                     backdrop-filter: blur(5px);
                     color: #ffffff;
                 }
+                /* Modal Styles */
+                .modal {
+                    display: none; /* Hidden by default */
+                    position: fixed; /* Stay in place */
+                    z-index: 1000; /* Sit on top */
+                    left: 0;
+                    top: 0;
+                    width: 100%; /* Full width */
+                    height: 100%; /* Full height */
+                    overflow: auto; /* Enable scroll if needed */
+                    background-color: rgba(0, 0, 0, 0.7); /* Black w/ opacity */
+                    color:black;
+                }
+
+                .modal-content {
+                    background-color: #fefefe;
+                    margin: 5% auto; /* 5% from the top and centered */
+                    padding: 20px;
+                    border: 1px solid #888;
+                    width: 80%; /* Could be more or less, depending on screen size */
+                    border-radius: 10px;
+                    position: relative;
+                }
+
+                .close-button {
+                    color: #4184ea;
+                    float: right;
+                    font-size: 28px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    position: absolute;
+                    right: 20px;
+                    top: 10px;
+                }
+
+                .close-button:hover,
+                .close-button:focus {
+                    color: #000;
+                    text-decoration: none;
+                    cursor: pointer;
+                }
+
+                /* Table Styles */
+                #statsTable {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+
+                }
+
+                #statsTable th, #statsTable td {
+                    border: 1px solid #ddd;
+                    padding: 8px;
+                    text-align: center;
+                }
+
+                #statsTable th {
+                    background-color: #343a40;
+                    color: white;
+                }
+
+                #statsTable tr:nth-child(even) {
+                    background-color: #f2f2f2;
+                }
+
+                /* Adjustments to ensure the modal content is scrollable if it overflows */
+                .modal-content {
+                    max-height: 80vh;
+                    overflow-y: auto;
+                }
+                /* Modal Animation */
+                .modal-content {
+                    animation-name: modalOpen;
+                    animation-duration: 0.5s;
+                }
+
+                @@keyframes modalOpen {
+                               from { opacity: 0; transform: translateY(-50px); }
+                               to { opacity: 1; transform: translateY(0); }
+                           }
         </style>
     </head>
     <body>
@@ -152,6 +232,15 @@
 
         <div id="searchSummary"></div>
         <div id="videoContainer"></div>
+        <div id="statsModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2 id="statsTitle"></h2>
+                <table id="statsTable">
+                        <!-- Table content will be dynamically generated -->
+                </table>
+            </div>
+        </div>
 
         <footer>
             <p>SOEN6441 project Akka Reactive webpage, Group: The Best App
@@ -184,7 +273,18 @@
                             case "summary":
                                 updateSummary(message.sentiment);
                                 break;
-
+                            case "wordStats":
+                                displayWordStats(message.query, message.wordStats);
+                                break;
+                                //for continuous connection
+                            case "ping":
+                                // Send pong back to server
+                                var pongMessage = {
+                                    type: 'pong'
+                                };
+                                console.log("server check connection success")
+                                socket.send(JSON.stringify(pongMessage));
+                                break;
                             default:
                                 console.log('Unknown message type:', message.type);
                         }
@@ -218,10 +318,26 @@
                     };
                     socket.send(JSON.stringify(searchMessage));
                 }
+                // function to request word stats
+                function requestWordStats(query) {
+                    var statsMessage = {
+                        type: 'wordStats',
+                        query: query
+                    };
+                    socket.send(JSON.stringify(statsMessage));
+                }
 
                 function updateSummary(sentiment){
                     var summary = document.getElementById('searchSummary');
-                    summary.innerHTML = `Search Terms: "${document.getElementById('searchInput').value}" ${sentiment} (More Stats. WIP)`;
+                    summary.innerHTML = `Search Terms: "${document.getElementById('searchInput').value}" ${sentiment} `;
+                    var statsButton = document.createElement('button');
+                    statsButton.textContent = 'Show Word Statistics';
+                    var query=document.getElementById('searchInput').value;
+                    statsButton.onclick = function() {
+                        requestWordStats(query);
+                    };
+                    summary.appendChild(statsButton);
+
                 }
 
                 function displayVideo(video) {
@@ -266,6 +382,61 @@
 
                     videoContainer.appendChild(videoElement);
                 }
+
+                // Function to display word statistics
+                function displayWordStats(query, wordStats) {
+                    // Get modal elements
+                    var modal = document.getElementById('statsModal');
+                    var statsTitle = document.getElementById('statsTitle');
+                    var statsTable = document.getElementById('statsTable');
+                    var closeButton = document.querySelector('.close-button');
+
+                    // Set the title
+                    statsTitle.textContent = 'Word Statistics for "' + query + '"';
+
+                    // Clear previous table content
+                    statsTable.innerHTML = '';
+
+                    // Create table header
+                    var headerRow = document.createElement('tr');
+                    var wordHeader = document.createElement('th');
+                    wordHeader.textContent = 'Word';
+                    var countHeader = document.createElement('th');
+                    countHeader.textContent = 'Frequency';
+                    headerRow.appendChild(wordHeader);
+                    headerRow.appendChild(countHeader);
+                    statsTable.appendChild(headerRow);
+
+                    // Populate table rows
+                    for (var word in wordStats) {
+                        //console.log(word+" "+wordStats[word])
+                        var row = document.createElement('tr');
+                        var wordCell = document.createElement('td');
+                        wordCell.textContent = word;
+                        var countCell = document.createElement('td');
+                        countCell.textContent = wordStats[word];
+                        row.appendChild(wordCell);
+                        row.appendChild(countCell);
+                        statsTable.appendChild(row);
+                    }
+
+                    // Show the modal
+                    modal.style.display = 'block';
+
+                    // When the user clicks on (x), close the modal
+                    closeButton.onclick = function() {
+                        modal.style.display = 'none';
+                    };
+
+                    // When the user clicks anywhere outside of the modal content, close it
+                    window.onclick = function(event) {
+                        if (event.target == modal) {
+                            modal.style.display = 'none';
+                            window.onclick = null; // Remove the handler to prevent conflicts
+                        }
+                    };
+                }
+
         </script>
 
     </body>

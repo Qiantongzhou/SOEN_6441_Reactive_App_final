@@ -45,7 +45,7 @@ public class WordStats {
                 })
                 // Filter out empty words
                 .filter(word -> !word.isEmpty() && !ignore.contains(word))
-
+                .filter(word -> !word.matches("\\d+"))
                 // Collect words into a map with word as key and frequency
                 .collect(Collectors.groupingBy(word -> word, Collectors.counting()))
                 // Convert the map to a sorted stream
