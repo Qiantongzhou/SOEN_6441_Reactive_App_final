@@ -13,9 +13,17 @@ import org.junit.Before;
 import org.junit.Test;
 import play.libs.Json;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import org.mockito.MockitoAnnotations;
 
 public class SearchActorIntegrationTest {
 
@@ -30,40 +38,54 @@ public class SearchActorIntegrationTest {
         actorSystem = ActorSystem.create();
     }
 
+
     /**
      * @author Tomas Pereira
      *
-     * Tests whether the SubmissionSentimentActor is well integrated with the SearchActor.
-     * When the SearchActor receives a search result, it will call handleVideoResults.
-     * This processes the video result, and then sends a message to the SubmissionSentimentActor to process the
-     * sentiment on that set of videos from the search result.
-     * This requires catching the result from 2 message returns: the searchResult message and the analyzeSentiment message.
+     * Test for the entire chain of query processing from a String search.
+     * Passes through the VideoQueryActor, SubmissionSentimentActor, and Search Actor to deliver the result.
      */
     @Test
-    public void testSentimentAnalysisIntegrationSearchResult(){
+    public void testFullQueryResultProcessing(){
         new TestKit(actorSystem){{
             final SearchHistoryModel mockSearchHistoryModel = mock(SearchHistoryModel.class);
             final ActorRef out = getTestActor();
             final ActorRef searchActor = actorSystem.actorOf(Props.create(SearchActor.class, out, mockSearchHistoryModel));
 
             Video happy = new Video("id1", "Happy", "ch1", "Channel 1", "Smile Smile Smile Joy Joy Joy", "thumb1");
-            // Singleton list used due to typing issue of simple list
-            SearchResult searchResult = new SearchResult("test query", Collections.singletonList(happy), null);
+            List<Video> videos = Collections.singletonList(happy);
 
-            // Send the search result to the SearchActor
-            searchActor.tell(searchResult, getRef());
+            // Mock response of Youtube API
+            when(mockSearchHistoryModel.queryYoutube("test")).thenReturn(videos);
 
-            // First Receive the video message and check
-            ObjectNode videoExpected = Json.newObject();
-            videoExpected.put("type", "video");
-            videoExpected.set("data", Json.toJson(happy));
-            expectMsgEquals(videoExpected);
+            // Test Actor Response to Query
+            ObjectNode message = Json.newObject();
+            message.put("type", "search");
+            message.put("query", "test");
+            searchActor.tell(message, getRef());
 
-            // Check equality for sentiment
-            ObjectNode summaryExpected = Json.newObject();
-            summaryExpected.put("type", "summary");
-            summaryExpected.put("sentiment", ":-)");
-            expectMsgEquals(summaryExpected);
+            // Mock Response from VideoActor
+            searchActor.tell(new SearchResult("test", videos, ""), getRef());
+
+            // Mock Response from Sentiment
+            searchActor.tell(new SubmissionSentimentActor.SentimentResult(":-)", videos), getRef());
+
+            // Checking response
+            ObjectNode expected = Json.newObject();
+            expected.put("type", "queryResult");
+            expected.put("query", "test");
+            expected.put("sentiment", ":-)");
+            expected.set("videos", Json.toJson(videos));
+
+            // Need to ignore ping messages
+            ObjectNode received;
+            do {
+                received = expectMsgClass(ObjectNode.class);
+            } while(received.has("type") && received.get("type").asText().equals("ping"));
+
+            received = expectMsgClass(ObjectNode.class);
+            assertEquals(received, expected);
+
         }};
     }
 

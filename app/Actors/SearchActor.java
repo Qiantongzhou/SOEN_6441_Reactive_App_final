@@ -12,6 +12,7 @@ import play.libs.Json;
 import scala.concurrent.duration.Duration;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +26,9 @@ public class SearchActor extends AbstractActor {
     private ActorRef videoQueryActor;
     private ActorRef sentimentActor;
     private Cancellable heartbeat;
+
+    private static final int MAX_QUERY_RESULTS = 10;
+    private final LinkedList<SearchResult> queryBuffer = new LinkedList<>();
 
     public SearchActor(ActorRef out, SearchHistoryModel shModel) {
         this.out = out;
@@ -65,25 +69,12 @@ public class SearchActor extends AbstractActor {
                 .match(Ping.class, ping -> sendPing())
                 // Handle Pong messages from client
                 .match(Pong.class, pong -> handlePong())
-                .match(SearchResult.class, this::handleVideoResults)
+                .match(SearchResult.class, this::processSearchResult)
                 .match(WordStatsActor.WordStatsResult.class, this::handleWordStatsResult)
-                .match(SubmissionSentimentActor.SentimentResult.class,
-                        result -> updateSearchSummary(result.getSentiment()))
+                .match(SubmissionSentimentActor.SentimentResult.class, this::handleSentimentResult)
                 .build();
     }
 
-    /**
-     * @author Tomas Pereira
-     * @param sentiment The sentiment result string for the set of videos that has been processed.
-     *
-     * After receiving a sentiment result message, the SearchActor sends it up to be displayed
-     */
-    private void updateSearchSummary(String sentiment){
-        ObjectNode summaryUpdate = Json.newObject();
-        summaryUpdate.put("type", "summary");
-        summaryUpdate.put("sentiment", sentiment);
-        out.tell(summaryUpdate, self());
-    }
 
     private void handleSearchQuery(String query) {
         if (videoQueryActor != null) {
@@ -109,6 +100,57 @@ public class SearchActor extends AbstractActor {
         sentimentActor.tell(new SubmissionSentimentActor.AnalyzeSentiment(message.videos), self());
     }
 
+    /**
+     * @author Tomas Pereira
+     * @param searchResult The current result of the search, which should have blank sentiment.
+     *
+     * After receiving a SearchResult from the VideoQueryActor, the SearchActor will add it to the current buffer.
+     * During this time, the SearchActor will also send a message to the SubmissionSentimentActor to process the
+     * sentiment on the list of videos that it received. These will be joined back together during handleSentimentResult.
+     */
+    private void processSearchResult(SearchResult searchResult){
+        // With the list of videos, can now get the sentiment
+        sentimentActor.tell(new SubmissionSentimentActor.AnalyzeSentiment(searchResult.videos), self());
+
+        // Add it to the buffer -> The sentiment will still be empty at this point
+        queryBuffer.addLast(searchResult);
+
+        if(queryBuffer.size() > MAX_QUERY_RESULTS)
+            queryBuffer.removeFirst();
+    }
+
+    /**
+     * @author Tomas Pereira
+     * @param result The sentiment result returned by the SubmissionSentimentActor
+     *
+     * Method for joining the sentiment of the current query back with its search result.
+     * It will update the Sentiment of the latest query, as this is the one which the request was sent for.
+     * Once updated, the result will be sent to the client through the sendToClient method.
+     */
+    private void handleSentimentResult(SubmissionSentimentActor.SentimentResult result){
+        // Check the result we just added
+        SearchResult updatedResult = queryBuffer.peekLast();
+
+        if(updatedResult != null){
+            updatedResult.sentiment = result.getSentiment();
+            // Can now send to client
+            sendToClient(updatedResult);
+        }
+    }
+
+    /**
+     * @author Tomas Pereira
+     * @param result The complete, ready to send, SearchResult
+     * Given a SearchResult, sends it to the client for display.
+     */
+    private void sendToClient(SearchResult result){
+        ObjectNode message = Json.newObject();
+        message.put("type", "queryResult");
+        message.put("query", result.query);
+        message.put("sentiment", result.sentiment);
+        message.set("videos", Json.toJson(result.videos));
+        out.tell(message, self());
+    }
 
     private void handleWordStats(String query) {
         // Create a WordStatsActor to process the word statistics
