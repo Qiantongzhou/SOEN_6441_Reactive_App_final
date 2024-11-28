@@ -22,7 +22,8 @@ public class YouTube {
     private static final String[] API_KEYS = {
             "AIzaSyBTdLng0J0bxQOYFhKhMrI23guTCVRI1xQ", // Qian
             "AIzaSyDHODjlC0o8VS9DE9KW40YofzxGN2tsk9M", // Tomas
-            "AIzaSyDO584JNmQbEi6yDkuG_UgNVVAtF4vHclU"  // Additional
+            "AIzaSyDO584JNmQbEi6yDkuG_UgNVVAtF4vHclU",  // Additional
+            "AIzaSyCfxCkaQRsxb5U7bFao_X7rynO5hYQ2qLU" // Sam perso
     };
 
     private static final String API_URL = "https://www.googleapis.com/youtube/v3/";

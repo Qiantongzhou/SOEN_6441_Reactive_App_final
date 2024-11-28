@@ -58,7 +58,7 @@ public class SearchActor extends AbstractActor {
                         handleSearchQuery(query);
                     } else if ("channelProfile".equals(type)) {
                         String channelId = message.get("channelId").asText();
-                        //handleChannelProfile(channelId);
+                        handleChannelProfile(channelId);
                     } else if ("wordStats".equals(type)) {
                         String query = message.get("query").asText();
                         handleWordStats(query);
@@ -70,6 +70,7 @@ public class SearchActor extends AbstractActor {
                 // Handle Pong messages from client
                 .match(Pong.class, pong -> handlePong())
                 .match(SearchResult.class, this::processSearchResult)
+                .match(ChannelProfileActor.ChannelProfileResult.class, this::handleChannelProfileResult)
                 .match(WordStatsActor.WordStatsResult.class, this::handleWordStatsResult)
                 .match(SubmissionSentimentActor.SentimentResult.class, this::handleSentimentResult)
                 .build();
@@ -152,6 +153,22 @@ public class SearchActor extends AbstractActor {
         out.tell(message, self());
     }
 
+    private void handleChannelProfile(String channelId) {
+        // Creates a ChannelProfileActor to process channel information
+        ActorRef channelProfileActor = getContext().actorOf(ChannelProfileActor.props(channelId, self(), shModel));
+    }
+
+    private void handleChannelProfileResult(ChannelProfileActor.ChannelProfileResult result) {
+        // Prepare the JSON message for the client
+        ObjectNode message = Json.newObject();
+        message.put("type", "channelProfile");
+        message.set("channel", Json.toJson(result.channel));
+        message.set("videos", Json.toJson(result.videos));
+
+        // Sends data to the client via WebSocket
+        out.tell(message, self());
+    }
+
     private void handleWordStats(String query) {
         // Create a WordStatsActor to process the word statistics
         ActorRef wordStatsActor = getContext().actorOf(WordStatsActor.props(query, self(), shModel));
@@ -165,6 +182,8 @@ public class SearchActor extends AbstractActor {
         message.set("wordStats", Json.toJson(result.wordStats));
         out.tell(message, self());
     }
+
+
 
 
     @Override

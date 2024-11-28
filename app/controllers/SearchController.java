@@ -45,12 +45,5 @@ public class SearchController extends Controller {
             return ActorFlow.actorRef(out -> Props.create(Actors.SearchActor.class, out, shModel), actorSystem, materializer);
         });
     }
-    public CompletionStage<Result> showChannelProfile(String channelId) {
-        // Handle the asynchronous retrieval of channel information
-        return CompletableFuture.supplyAsync(() -> {
-            Channel channelDetails = shModel.getChannelDetails(channelId);
-            List<Video> latestVideos = shModel.getChannelVideos(channelId, 10);
-            return ok(views.html.channel.render(channelDetails, latestVideos));
-        });
-    }
+
 }
