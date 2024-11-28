@@ -30,11 +30,14 @@ public class SearchHistoryModel {
     }
 
     /**
-     * Given a string of keywords, queries the YouTube API to retrieve videos matching them.
-     * Creates Video objects for the retrieved videos and stores them in a list using streams.
+     * @author Tomas Pereira
      *
-     * @param query The string of keywords being searched.
-     * @return The list of videos retrieved from the YouTube API.
+     * Helper function.
+     * Given a string of keywords, queries the Youtube API to retrieve 50 videos matching them.
+     * Creates a Video object for each of these retrieved videos and stores them in a list.
+     *
+     * @param query The string of keywords being searched
+     * @return The list of videos that are retrieved from the Youtube API using the given keywords
      */
     public List<Video> queryYoutube(String query) {
         return queryYoutubeWithNum(query, RESULTS_PER_QUERY);
@@ -103,10 +106,16 @@ public class SearchHistoryModel {
     }
 
     /**
-     * Retrieves information about a specific YouTube channel using streams.
+     * @author Sam Collin
      *
-     * @param channelId The ID of the channel.
-     * @return Channel object containing channel details.
+     * Method that retrieves all the information about a specific Youtube channel.
+     *
+     * This method calls the Youtube API to retrieve information about a specific channel identified by it's channelId given.
+     * It retrieves the channelId, title, description, published date, country, customUrl, thumbnail URL, subscriber count, view count, and video count.
+     * It then creates and returns a {@link Channel} object.
+     *
+     * @param channelId The ID of the channel whose information will be retrieved.
+     * @return A {@link Channel} object containing all the information, if not found, it returns null.
      */
     public Channel getChannelDetails(String channelId) {
         try {
@@ -136,11 +145,17 @@ public class SearchHistoryModel {
     }
 
     /**
-     * Retrieves the latest videos belonging to a specific YouTube channel using streams.
+     * @author Sam Collin
      *
-     * @param channelId The ID of the channel.
-     * @param maxResults Number of videos to retrieve.
-     * @return List of videos retrieved.
+     * This method retrieves the latest videos belonging to a specific youtube channel.
+     *
+     * This method calls the Youtube API to retrieve a user specified quantity of videos associated to a certain channel
+     * identified by the given ID as parameters.<br>
+     * It will return a list of {@link Video} objects containing info like videoId, title, channelId, channelTitle, description, ...
+     *
+     * @param channelId The channel where the latest videos are searched.
+     * @param maxResults The number of videos that will be retrieved.
+     * @return a list of {@link Video} objects containing the maxResults latest videos. If none is found, the list will just be empty.
      */
     public List<Video> getChannelVideos(String channelId, int maxResults) {
         try {
