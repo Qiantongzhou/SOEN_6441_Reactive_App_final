@@ -50,8 +50,9 @@ public class SubmissionSentimentActor extends AbstractActor {
      * Send the returned sentiment string back to the message sender.
      */
     private void handleAnalyzeSentiment(AnalyzeSentiment request){
-        String sentiment = sentimentAnalyzer.determineSentiment(request.getVideos());
-        getSender().tell(new SentimentResult(sentiment), self());
+        List<Video> videos = request.getVideos();
+        String sentiment = sentimentAnalyzer.determineSentiment(videos);
+        getSender().tell(new SentimentResult(sentiment, videos), self());
     }
 
     /**
@@ -74,18 +75,22 @@ public class SubmissionSentimentActor extends AbstractActor {
     /**
      * @author Tomas Pereira
      *
-     * Inner class for sending the result of sentiment analysis (String).
+     * Inner class for sending the result of sentiment analysis.
+     * Contains both the sentiment and list of videos in order to send them jointly to the clientside.
      */
     public static class SentimentResult {
         private final String sentiment;
+        private final List<Video> videos;
 
-        public SentimentResult(String sentiment){
+        public SentimentResult(String sentiment, List<Video> videos){
             this.sentiment = sentiment;
+            this.videos = videos;
         }
 
         public String getSentiment(){
             return sentiment;
         }
+        public List<Video> getVideos() {return videos;}
     }
 
 }

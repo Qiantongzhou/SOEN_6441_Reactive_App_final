@@ -86,6 +86,12 @@
                     justify-content: center;
                     padding: 0 20px;
                 }
+                .video-container {
+                    display: flex;
+                    flex-wrap: wrap;
+                    justify-content: center;
+                    padding: 0 20px;
+                }
                 .video-item {
                     background: rgba(255, 255, 255, 0.15);
                     border-radius: 20px;
@@ -232,6 +238,8 @@
 
         <div id="searchSummary"></div>
         <div id="videoContainer"></div>
+        <div id="queriesContainer"></div>
+
         <div id="statsModal" class="modal">
             <div class="modal-content">
                 <span class="close-button">&times;</span>
@@ -242,6 +250,8 @@
             </div>
         </div>
 
+
+
         <footer>
             <p>SOEN6441 project Akka Reactive webpage, Group: The Best App
             </p>
@@ -250,6 +260,8 @@
         <script type="text/javascript">
                 var socket;
                 var receivedVideoIds = new Set();
+                const queryBuffer = [];
+                const MAX_QUERIES = 10;
 
                 window.onload = function() {
                     connectWebSocket();
@@ -267,11 +279,8 @@
                     socket.onmessage = function(event) {
                         var message = JSON.parse(event.data);
                         switch (message.type) {
-                            case "video":
-                                displayVideo(message.data);
-                                break;
-                            case "summary":
-                                updateSummary(message.sentiment);
+                            case "queryResult":
+                                displayQueryResult(message.query, message.sentiment, message.videos);
                                 break;
                             case "wordStats":
                                 displayWordStats(message.query, message.wordStats);
@@ -310,7 +319,7 @@
                     document.getElementById('searchSummary').innerHTML = '';
                     receivedVideoIds.clear();
 
-                    document.getElementById('searchSummary').innerText = `Search Terms: "${query}" (Sentiment. WIP) (More Stats. WIP)`
+                    // document.getElementById('searchSummary').innerText = `Search Terms: "${query}" (Sentiment. WIP) (More Stats. WIP)`
 
                     var searchMessage = {
                         type: 'search',
@@ -318,6 +327,7 @@
                     };
                     socket.send(JSON.stringify(searchMessage));
                 }
+
                 // function to request word stats
                 function requestWordStats(query) {
                     var statsMessage = {
@@ -340,6 +350,83 @@
 
                 }
 
+                function displayQueryResult(query, sentiment, videos){
+                    const queryContainer = document.createElement("div");
+                    queryContainer.classList.add("query-container");
+
+                    // Summary part
+                    var summary = document.createElement('div');
+                    summary.classList.add("search-summary");
+                    summary.innerHTML = `Search Terms: "${document.getElementById('searchInput').value}" ${sentiment} `;
+                    var statsButton = document.createElement('button');
+                    statsButton.textContent = 'Show Word Statistics';
+                    statsButton.onclick = function() {
+                        requestWordStats(query);
+                    };
+                    summary.appendChild(statsButton);
+
+                    queryContainer.appendChild(summary);
+
+                    // Videos
+                    var videoContainer = document.createElement('div');
+                    videoContainer.classList.add('video-container');
+
+                    for (const video of videos){
+                        var videoElement = createVideo(video);
+                        videoContainer.appendChild(videoElement);
+                    }
+
+                    queryContainer.appendChild(videoContainer);
+
+                    // Add to the top
+                    document.getElementById("queriesContainer").prepend(queryContainer);
+
+                    // Make sure we have only the max
+                    queryBuffer.unshift(queryContainer);
+                    if (queryBuffer.length > MAX_QUERIES){
+                        const toRemove = queryBuffer.pop();
+                        toRemove.remove();
+                    }
+                }
+
+                function createVideo(video){
+                    var videoElement = document.createElement('div');
+                    videoElement.classList.add('video-item');
+
+                    var thumbnail = document.createElement('img');
+                    thumbnail.src = video.thumbnail;
+                    videoElement.appendChild(thumbnail);
+
+                    var videoContent = document.createElement('div');
+                    videoContent.classList.add('video-content');
+
+                    var title = document.createElement('h3');
+                    var titleLink = document.createElement('a');
+                    titleLink.href = 'https://www.youtube.com/watch?v=' + video.videoId;
+                    titleLink.target = '_blank';
+                    titleLink.textContent = video.title;
+                    title.appendChild(titleLink);
+                    videoContent.appendChild(title);
+
+                    var channel = document.createElement('p');
+                    channel.innerHTML = '<b>Channel:</b> ';
+                    var channelLink = document.createElement('a');
+                    channelLink.href = '@routes.SearchController.showChannelProfile("' + video.channelId + '")';
+                    channelLink.textContent = video.channelTitle;
+                    channel.appendChild(channelLink);
+                    videoContent.appendChild(channel);
+
+                    var description = document.createElement('p');
+                    description.innerHTML = '<b>Description:</b> ' + video.description;
+                    videoContent.appendChild(description);
+
+                    videoElement.appendChild(videoContent);
+
+                    return videoElement;
+                }
+
+
+                // Deprecated*
                 function displayVideo(video) {
                     if (receivedVideoIds.has(video.videoId)) {
                         return;

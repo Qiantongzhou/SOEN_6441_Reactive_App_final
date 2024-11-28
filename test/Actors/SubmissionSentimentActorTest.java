@@ -55,6 +55,56 @@ public class SubmissionSentimentActorTest {
 
     /**
      * @author Tomas Pereira
+     *
+     * Tests the functionality of the SubmissionSentiment actor by cross-checking videos in the result.
+     */
+    @Test
+    public void testGetVideos(){
+        new TestKit(actorSystem){{
+            final Props props = SubmissionSentimentActor.props();
+            final ActorRef sentimentActor = actorSystem.actorOf(props);
+
+            Video happy = new Video("id1", "Sad", "ch1", "Channel 1", "Unhappy Unhappy Unhappy Sad Sad Sad", "thumb1");
+            Video sad = new Video("id2", "Sad2", "ch2", "Channel 2", "Unhappy Unhappy Unhappy Sad Sad Sad", "thumb2");
+            List<Video> videos = Arrays.asList(happy, sad);
+
+            // Send the AnalyzeSentiment message
+            sentimentActor.tell(new SubmissionSentimentActor.AnalyzeSentiment(videos), getRef());
+
+            // Check for expected return
+            SubmissionSentimentActor.SentimentResult result = expectMsgClass(SubmissionSentimentActor.SentimentResult.class);
+
+            assertEquals(videos, result.getVideos());
+        }};
+    }
+
+    /**
+     * @author Tomas Pereira
+     *
+     * Tests the functionality of the SubmissionSentiment actor by checking for the appropriate sentiment.
+     */
+    @Test
+    public void testGetSentiment(){
+        new TestKit(actorSystem){{
+            final Props props = SubmissionSentimentActor.props();
+            final ActorRef sentimentActor = actorSystem.actorOf(props);
+
+            Video happy = new Video("id1", "Sad", "ch1", "Channel 1", "Unhappy Unhappy Unhappy Sad Sad Sad", "thumb1");
+            Video sad = new Video("id2", "Sad2", "ch2", "Channel 2", "Unhappy Unhappy Unhappy Sad Sad Sad", "thumb2");
+            List<Video> videos = Arrays.asList(happy, sad);
+
+            // Send the AnalyzeSentiment message
+            sentimentActor.tell(new SubmissionSentimentActor.AnalyzeSentiment(videos), getRef());
+
+            // Check for expected return
+            SubmissionSentimentActor.SentimentResult result = expectMsgClass(SubmissionSentimentActor.SentimentResult.class);
+
+            assertEquals(":-(", result.getSentiment());
+        }};
+    }
+
+    /**
+     * @author Tomas Pereira
      * Tears down the generated actor system and nulls the reference.
      */
     @After
