@@ -27,6 +27,15 @@
         <div id="videoContainer"></div>
         <div id="queriesContainer"></div>
 
+        <div id="channelModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" id="channelModalClose">&times;</span>
+                <div id="channelProfileContent">
+                    <!-- Le contenu du profil sera inséré dynamiquement -->
+                </div>
+            </div>
+        </div>
+
         <div id="statsModal" class="modal">
             <div class="modal-content">
                 <span class="close-button">&times;</span>
@@ -273,8 +282,9 @@
                 }
 
                 function displayChannelProfile(channel, videos) {
-                    const container = document.getElementById('queriesContainer');
-                    container.innerHTML = ''; // Efface le contenu précédent
+                    var modal = document.getElementById('channelModal');
+                    var content = document.getElementById('channelProfileContent');
+                    content.innerHTML = ''; // Efface le contenu précédent
 
                     // Section Channel Details
                     const channelSection = document.createElement('div');
@@ -324,7 +334,7 @@
                     videoCount.innerHTML = `<b>Total Videos:</b> ${channel.videoCount}`;
                     channelSection.appendChild(videoCount);
 
-                    container.appendChild(channelSection);
+                    content.appendChild(channelSection);
 
                     // Section Video List
                     const videoSection = document.createElement('div');
@@ -335,8 +345,26 @@
                         videoSection.appendChild(videoElement);
                     });
 
-                    container.appendChild(videoSection);
+                    content.appendChild(videoSection);
+
+                    // Affiche la modale
+                    modal.style.display = 'block';
                 }
+
+                // Managing the closure of the Channel modal
+                document.getElementById('channelModalClose').onclick = function() {
+                    document.getElementById('channelModal').style.display = 'none';
+                };
+
+                // Close the Channel modal by clicking outside
+                document.getElementById('channelModal').addEventListener('click', function(event) {
+                    if (event.target === document.getElementById('channelModal')) {
+                        document.getElementById('channelModal').style.display = 'none';
+                    }
+                });
+
+
+
 
                 // Function to display word statistics
                 function displayWordStats(query, wordStats) {
@@ -378,6 +406,7 @@
                     // Show the modal
                     modal.style.display = 'block';
 
+                    /*
                     // When the user clicks on (x), close the modal
                     closeButton.onclick = function() {
                         modal.style.display = 'none';
@@ -390,7 +419,22 @@
                             window.onclick = null; // Remove the handler to prevent conflicts
                         }
                     };
+                    */
+
                 }
+
+                // Closing the WordStats modal
+                document.querySelector('#statsModal .close-button').onclick = function() {
+                    document.getElementById('statsModal').style.display = 'none';
+                };
+
+                // Close the WordStats modal by clicking outside
+                document.getElementById('statsModal').addEventListener('click', function(event) {
+                    if (event.target === document.getElementById('statsModal')) {
+                        document.getElementById('statsModal').style.display = 'none';
+                    }
+                });
+
 
         </script>
 
