@@ -39,7 +39,7 @@ public class VideoQueryActor extends AbstractActor {
     public void preStart() {
         cancellable = getContext().system().scheduler().schedule(
                 Duration.Zero(),
-                Duration.create(10, "seconds"),
+                Duration.create(20, "seconds"),
                 self(),
                 new Tick(),
                 getContext().system().dispatcher(),
@@ -55,7 +55,7 @@ public class VideoQueryActor extends AbstractActor {
     }
 
     private void checkForNewVideos() {
-        List<Video> videos = shModel.queryYoutubewithnum(query, 10);
+        List<Video> videos = shModel.queryYoutubeWithNum(query, 10);
         List<Video> newVideos = new ArrayList<>();
         for (Video video : videos) {
             if (!sentVideoIds.contains(video.getVideoId())) {
