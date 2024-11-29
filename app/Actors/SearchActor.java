@@ -153,11 +153,21 @@ public class SearchActor extends AbstractActor {
         out.tell(message, self());
     }
 
+    /**
+     * @author Sam Collin
+     * Handles the creation of a ChannelProfileActor to process channel information.
+     * @param channelId the ID of the channel to process.
+     */
     private void handleChannelProfile(String channelId) {
         // Creates a ChannelProfileActor to process channel information
         ActorRef channelProfileActor = getContext().actorOf(ChannelProfileActor.props(channelId, self(), shModel));
     }
 
+    /**
+     * @author Sam Collin
+     * Handles the result from ChannelProfileActor and sends the channel details and videos to the client.
+     * @param result the result containing channel details and videos.
+     */
     private void handleChannelProfileResult(ChannelProfileActor.ChannelProfileResult result) {
         // Prepare the JSON message for the client
         ObjectNode message = Json.newObject();

@@ -5,6 +5,7 @@ import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.testkit.javadsl.TestKit;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import models.Channel;
 import models.SearchHistoryModel;
 import models.SearchResult;
 import models.Video;
@@ -14,6 +15,7 @@ import org.junit.Test;
 import play.libs.Json;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -88,6 +90,62 @@ public class SearchActorIntegrationTest {
 
         }};
     }
+
+    /**
+     * @author Sam Collin
+     * Tests the processing of a channel profile request in the SearchActor by verifying the received response matches the expected channel and video data.
+     */
+    @Test
+    public void testChannelProfileProcessing() {
+        new TestKit(actorSystem) {{
+            // Mock dependencies
+            final SearchHistoryModel mockSearchHistoryModel = mock(SearchHistoryModel.class);
+            final ActorRef out = getTestActor();
+            final ActorRef searchActor = actorSystem.actorOf(Props.create(SearchActor.class, out, mockSearchHistoryModel));
+
+            // Mock channel and video data
+            Channel mockChannel = new Channel(
+                    "channelId1", "Channel Title", "Description", "2022-01-01T00:00:00Z",
+                    "US", "http://example.com/customUrl", "http://example.com/thumbnail.jpg",
+                    1000, false, 5000, 100
+            );
+            List<Video> mockVideos = Arrays.asList(
+                    new Video("videoId1", "Video Title 1", "channelId1", "Channel Title", "Description 1", "http://example.com/video1.jpg"),
+                    new Video("videoId2", "Video Title 2", "channelId1", "Channel Title", "Description 2", "http://example.com/video2.jpg")
+            );
+
+            // Create a mock message to request a channel profile
+            ObjectNode message = Json.newObject();
+            message.put("type", "channelProfile");
+            message.put("channelId", "channelId1");
+
+            // Send the request to the SearchActor
+            searchActor.tell(message, getRef());
+
+            // Mock response from the ChannelProfileActor
+            searchActor.tell(new ChannelProfileActor.ChannelProfileResult(mockChannel, mockVideos), getRef());
+
+            // Ignore `ping` messages and wait for the correct response
+            ObjectNode received;
+            do {
+                received = expectMsgClass(ObjectNode.class);
+            } while (received.has("type") && received.get("type").asText().equals("ping"));
+
+            // Expected response to the client
+            ObjectNode expected = Json.newObject();
+            expected.put("type", "channelProfile");
+            expected.set("channel", Json.toJson(mockChannel));
+            expected.set("videos", Json.toJson(mockVideos));
+
+            // Assert the expected response
+            assertEquals(expected, received);
+        }};
+    }
+
+
+
+
+
 
     /**
      * @author Tomas Pereira
