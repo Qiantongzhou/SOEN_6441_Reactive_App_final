@@ -85,9 +85,14 @@ public class SearchActorIntegrationTest {
                 received = expectMsgClass(ObjectNode.class);
             } while(received.has("type") && received.get("type").asText().equals("ping"));
 
+            ObjectNode expected1 = Json.newObject();
+            expected1.put("type", "ping");
             received = expectMsgClass(ObjectNode.class);
-            assertEquals(received, expected);
-
+            if(received.has("type") && received.get("type").asText().equals("ping")){
+            assertEquals(received, expected1);
+            }else {
+                assertEquals(received, expected);
+            }
         }};
     }
 

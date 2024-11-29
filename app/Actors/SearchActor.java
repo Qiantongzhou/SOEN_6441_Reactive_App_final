@@ -39,7 +39,7 @@ public class SearchActor extends AbstractActor {
     public void preStart(){
         sentimentActor = getContext().actorOf(SubmissionSentimentActor.props());
         heartbeat = getContext().getSystem().scheduler().schedule(
-                Duration.Zero(),
+                Duration.create(5, TimeUnit.SECONDS),
                 Duration.create(30, TimeUnit.SECONDS),
                 self(),
                 new Ping(),
@@ -62,13 +62,10 @@ public class SearchActor extends AbstractActor {
                     } else if ("wordStats".equals(type)) {
                         String query = message.get("query").asText();
                         handleWordStats(query);
-                    }else if ("pong".equals(type)) {
-                        //do nothing rightnow
                     }
                 })
                 .match(Ping.class, ping -> sendPing())
-                // Handle Pong messages from client
-                .match(Pong.class, pong -> handlePong())
+
                 .match(SearchResult.class, this::processSearchResult)
                 .match(ChannelProfileActor.ChannelProfileResult.class, this::handleChannelProfileResult)
                 .match(WordStatsActor.WordStatsResult.class, this::handleWordStatsResult)
@@ -78,28 +75,13 @@ public class SearchActor extends AbstractActor {
 
 
     private void handleSearchQuery(String query) {
-        if (videoQueryActor != null) {
-            getContext().stop(videoQueryActor);
-        }
+
         receivedVideoIds.clear();
         videoQueryActor = getContext().actorOf(Props.create(VideoQueryActor.class, query, self(), shModel));
     }
 
 
-    private void handleVideoResults(SearchResult message) {
-        for (Video video : message.videos) {
-            if (!receivedVideoIds.contains(video.getVideoId())) {
-                receivedVideoIds.add(video.getVideoId());
-                ObjectNode response = Json.newObject();
-                response.put("type", "video");
-                response.set("data", Json.toJson(video));
-                out.tell(response, self());
-            }
-        }
 
-        // After getting the list, send a message to process the sentiment
-        sentimentActor.tell(new SubmissionSentimentActor.AnalyzeSentiment(message.videos), self());
-    }
 
     /**
      * @author Tomas Pereira
@@ -116,8 +98,7 @@ public class SearchActor extends AbstractActor {
         // Add it to the buffer -> The sentiment will still be empty at this point
         queryBuffer.addLast(searchResult);
 
-        if(queryBuffer.size() > MAX_QUERY_RESULTS)
-            queryBuffer.removeFirst();
+
     }
 
     /**
@@ -132,11 +113,11 @@ public class SearchActor extends AbstractActor {
         // Check the result we just added
         SearchResult updatedResult = queryBuffer.peekLast();
 
-        if(updatedResult != null){
-            updatedResult.sentiment = result.getSentiment();
+
+        updatedResult.sentiment = result.getSentiment();
             // Can now send to client
-            sendToClient(updatedResult);
-        }
+        sendToClient(updatedResult);
+
     }
 
     /**
@@ -210,9 +191,8 @@ public class SearchActor extends AbstractActor {
         if (videoQueryActor != null) {
             getContext().stop(videoQueryActor);
         }
-        if (heartbeat != null && !heartbeat.isCancelled()) {
-            heartbeat.cancel();
-        }
+        heartbeat.cancel();
+
 
     }
     private void sendPing() {
@@ -221,10 +201,7 @@ public class SearchActor extends AbstractActor {
         out.tell(message, self());
     }
 
-    private void handlePong() {
-        // Optionally log or handle pong response
-    }
+
     // Message classes
     public static class Ping {}
-    public static class Pong {}
 }

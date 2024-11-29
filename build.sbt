@@ -20,7 +20,8 @@ lazy val root = (project in file("."))
 
 libraryDependencies += guice
 libraryDependencies += "org.mockito" % "mockito-core" % "5.7.0" % Test
-
+libraryDependencies+="org.powermock"%"powermock-module-junit4"%"2.0.9"%Test
+libraryDependencies+="org.powermock"%"powermock-api-mockito2"%"2.0.9"%Test
 libraryDependencies ++= Seq(
   "org.junit.jupiter" % "junit-jupiter-api" % "5.9.2" % Test,  // JUnit 5 API
   "org.junit.jupiter" % "junit-jupiter-engine" % "5.9.2" % Test // JUnit 5 Engine

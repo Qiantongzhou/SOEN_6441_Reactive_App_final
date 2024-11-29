@@ -381,7 +381,66 @@ class SearchHistoryModelTest {
         assertEquals(47, result.getVideoCount());
 
     }
+    /**
+     * @throws Exception
+     * @author Sam Collin
+     * This tests simulate a successful call to the api to retrieve specific information about a channel.
+     * It creates its own fake JSON file and then pass it when the Youtube class is supposed to be called.
+     * After that, the method getChannelDetails is just tested in the case everything works fine and we verify that all the information have been retrieved.
+     */
+    @Test
+    public void testGetChannelDetailswithoutcountry() throws Exception {
 
+        String fakeChannelId = "0000000";
+
+        String fakeChannelResponseFromAPI = """
+                    {
+                      "items": [
+                        {
+                          "id": "0000000",
+                          "snippet": {
+                            "title": "Fake Channel Title",
+                            "description": "This description is a fake one.",
+                            "publishedAt": "2024-11-08T12:00:00Z",
+                            "thumbnails": {
+                              "default": {
+                                "url": "https://fakeurl.com/thumbnail.jpg"
+                              }
+                            }
+                          },
+                          "statistics": {
+                            "subscriberCount": "999",
+                            "hiddenSubscriberCount": false,
+                            "viewCount": "14000",
+                            "videoCount": "47"
+                          }
+                        }
+                      ]
+                    }
+                """;
+
+        // This step allows to create a json node object hich is what the API usually returns.
+        JsonNode fakeJsonNode = new ObjectMapper().readTree(fakeChannelResponseFromAPI);
+
+        // This is where we trick our program into thinking that the API returned this JSON node when it was called with the ID we've just created.
+        when(mockYoutube.getChannelDetails(fakeChannelId)).thenReturn(fakeJsonNode);
+
+        // We then make our call
+        Channel result = searchHistoryModel.getChannelDetails(fakeChannelId);
+
+        assertNotNull(result);
+        assertEquals("0000000", result.getId());
+        assertEquals("Fake Channel Title", result.getTitle());
+        assertEquals("This description is a fake one.", result.getDescription());
+        assertEquals("2024-11-08T12:00:00Z", result.getPublishedAt());
+        assertEquals("N/A", result.getCountry());
+        assertEquals("https://fakeurl.com/thumbnail.jpg", result.getThumbnailUrl());
+        assertEquals(999, result.getSubscriberCount());
+        assertFalse(result.getHiddenSubscriberCount());
+        assertEquals(14000, result.getViewCount());
+        assertEquals(47, result.getVideoCount());
+
+    }
     /**
      * @throws Exception
      * @author Sam Collin

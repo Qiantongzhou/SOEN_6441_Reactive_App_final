@@ -12,7 +12,7 @@ public class WordStatsActor extends AbstractActor {
     private final ActorRef parent;
     private final SearchHistoryModel shModel;
 
-    public class WordStatsResult {
+    public static class WordStatsResult {
         public final String query;
         public final Map<String, Long> wordStats;
 

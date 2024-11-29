@@ -18,7 +18,7 @@ public class VideoQueryActor extends AbstractActor {
     private final ActorRef parent;
     private final SearchHistoryModel shModel;
     private final Set<String> sentVideoIds = new HashSet<>();
-    private Cancellable cancellable;
+    Cancellable cancellable;
 
     public VideoQueryActor(String query, ActorRef parent, SearchHistoryModel shModel) {
         this.query = query;
@@ -49,9 +49,8 @@ public class VideoQueryActor extends AbstractActor {
 
     @Override
     public void postStop() {
-        if (cancellable != null && !cancellable.isCancelled()) {
             cancellable.cancel();
-        }
+
     }
 
     private void checkForNewVideos() {

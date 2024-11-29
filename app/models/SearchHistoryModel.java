@@ -128,8 +128,7 @@ public class SearchHistoryModel {
                             channelNode.get("snippet").get("title").asText(),
                             channelNode.get("snippet").get("description").asText(),
                             channelNode.get("snippet").get("publishedAt").asText(),
-                            channelNode.get("snippet").has("country") ? channelNode.get("snippet").get("country").asText() : "N/A",
-                            "N/A", // Custom URL
+                            channelNode.get("snippet").has("country") ? channelNode.get("snippet").get("country").asText() : "N/A", "N/A", // Custom URL
                             channelNode.get("snippet").get("thumbnails").get("default").get("url").asText(),
                             channelNode.get("statistics").get("subscriberCount").asInt(),
                             channelNode.get("statistics").get("hiddenSubscriberCount").asBoolean(),
