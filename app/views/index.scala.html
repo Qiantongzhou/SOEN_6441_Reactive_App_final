@@ -58,7 +58,8 @@
                 var receivedVideoIds = new Set();
                 const queryBuffer = [];
                 const MAX_QUERIES = 10;
-
+                var currentDiv=false;
+                var currentDivcontainer=null;
                 window.onload = function() {
                     connectWebSocket();
                 };
@@ -125,6 +126,7 @@
                         query: query
                     };
                     socket.send(JSON.stringify(searchMessage));
+                    currentDiv=true;
                 }
 
                 function requestChannelProfile(channelId) {
@@ -156,44 +158,55 @@
                     summary.appendChild(statsButton);
 
                 }
-
+//Check if we start a new search or append to the latest container
                 function displayQueryResult(query, sentiment, videos){
-                    const queryContainer = document.createElement("div");
-                    queryContainer.classList.add("query-container");
+
 
                     // Summary part
-                    var summary = document.createElement('div');
-                    summary.classList.add("search-summary");
-                    summary.innerHTML = `Search Terms: "${document.getElementById('searchInput').value}" ${sentiment} `;
-                    var statsButton = document.createElement('button');
-                    statsButton.textContent = 'Show Word Statistics';
-                    statsButton.onclick = function() {
-                        requestWordStats(query);
-                    };
-                    summary.appendChild(statsButton);
+                    if(currentDiv) {
+                        const queryContainer = document.createElement("div");
+                        queryContainer.classList.add("query-container");
+                        var summary = document.createElement('div');
+                        summary.classList.add("search-summary");
+                        summary.innerHTML = `Search Terms: "${document.getElementById('searchInput').value}" ${sentiment} `;
+                        var statsButton = document.createElement('button');
+                        statsButton.textContent = 'Show Word Statistics';
+                        statsButton.onclick = function () {
+                            requestWordStats(query);
+                        };
+                        summary.appendChild(statsButton);
 
-                    queryContainer.appendChild(summary);
+                        queryContainer.appendChild(summary);
+                        var videoContainer = document.createElement('div');
+                        videoContainer.classList.add('video-container');
 
-                    // Videos
-                    var videoContainer = document.createElement('div');
-                    videoContainer.classList.add('video-container');
+                        for (const video of videos){
+                            var videoElement = createVideo(video);
+                            videoContainer.appendChild(videoElement);
+                        }
 
-                    for (const video of videos){
-                        var videoElement = createVideo(video);
-                        videoContainer.appendChild(videoElement);
+                        queryContainer.appendChild(videoContainer);
+                        currentDivcontainer=videoContainer;
+                        document.getElementById("queriesContainer").prepend(queryContainer);
+                        currentDiv=false;
+                        // Make sure we have only the max
+                        queryBuffer.unshift(queryContainer);
+                        if (queryBuffer.length > MAX_QUERIES){
+                            const toRemove = queryBuffer.pop();
+                            toRemove.remove();
+                        }
+                    }else{
+
+                        var videoContainer = document.createElement('div');
+                        videoContainer.classList.add('video-container');
+
+                        for (const video of videos){
+                            var videoElement = createVideo(video);
+                            currentDivcontainer.appendChild(videoElement);
+                        }
+
                     }
 
-                    queryContainer.appendChild(videoContainer);
-
-                    // Add to the top
-                    document.getElementById("queriesContainer").prepend(queryContainer);
-
-                    // Make sure we have only the max
-                    queryBuffer.unshift(queryContainer);
-                    if (queryBuffer.length > MAX_QUERIES){
-                        const toRemove = queryBuffer.pop();
-                        toRemove.remove();
-                    }
                 }
 
                 function createVideo(video){

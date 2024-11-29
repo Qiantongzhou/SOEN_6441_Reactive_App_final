@@ -192,7 +192,7 @@ public class SearchHistoryModel {
                                 item.get("snippet").get("thumbnails").get("default").get("url").asText()
                         );
                     } catch (Exception e) {
-                        System.err.println("Error extracting video: " + e.getMessage());
+                        System.err.println("no new videos to extract");
                         return null;
                     }
                 })
