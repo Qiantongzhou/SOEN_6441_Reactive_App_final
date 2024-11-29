@@ -149,5 +149,19 @@ public class YouTubeTest {
         assertTrue(result.has("error"));
         assertTrue(result.get("error").asText().contains("All API keys failed"));
     }
+    @Test
+    public void testUnknownFailure() throws Exception {
+        // Arrange
+        String[] emptyApiKeys = {};
+        youTube = new YouTube(mockHttpClient, emptyApiKeys);
+
+        // Act
+        JsonNode result = youTube.searchVideos("test query", 5);
+
+        // Assert
+        assertNotNull(result);
+        assertTrue(result.has("error"));
+        assertEquals("Unknown failure occurred.", result.get("error").asText());
+    }
 
 }
