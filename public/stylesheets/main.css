@@ -254,3 +254,53 @@ footer {
                from { opacity: 0; transform: translateY(-50px); }
                to { opacity: 1; transform: translateY(0); }
            }
+
+/* Styles for the search summary container */
+.search-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #272434, #484556); /* Dark gradient background */
+    padding: 15px 20px;
+    margin: 20px 0;
+    border-radius: 15px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 15px rgb(61, 60, 90); /* Cyan glow effect */
+    border: 1px solid rgb(56, 54, 82); /* Subtle neon border */
+}
+
+
+/* Text inside the search summary */
+.search-summary div {
+    font-size: 20px;
+    color: #00ffff; /* Neon cyan text */
+    font-weight: 600;
+    text-shadow: 0 0 5px rgba(0, 255, 255, 0.7);
+}
+
+/* Styles for the button */
+.search-summary button {
+    padding: 10px 25px;
+    font-size: 16px;
+    font-family: 'Poppins', sans-serif;
+    border: none;
+    border-radius: 30px;
+    background: linear-gradient(135deg, #73707c, #211f2e); /* Vibrant gradient */
+    color: #ffffff;
+    cursor: pointer;
+    outline: none;
+    box-shadow: 0 0 10px rgba(91, 112, 244, 0.5);
+    transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.search-summary button:hover {
+    background: linear-gradient(135deg, #70688f, #49495e);
+    transform: translateY(-5px);
+    box-shadow: 0 0 20px rgba(97, 128, 255, 0.7);
+}
+
+.search-summary button:active {
+    transform: translateY(0);
+    box-shadow: 0 0 10px rgba(84, 106, 251, 0.5);
+}
