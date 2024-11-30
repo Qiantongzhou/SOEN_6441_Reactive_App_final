@@ -30,11 +30,19 @@ public class SearchActor extends AbstractActor {
     private static final int MAX_QUERY_RESULTS = 10;
     private final LinkedList<SearchResult> queryBuffer = new LinkedList<>();
 
+    /**
+     * default constructor
+     * @param out
+     * @param shModel
+     */
     public SearchActor(ActorRef out, SearchHistoryModel shModel) {
         this.out = out;
         this.shModel = shModel;
     }
 
+    /**
+     * before start
+     */
     @Override
     public void preStart(){
         sentimentActor = getContext().actorOf(SubmissionSentimentActor.props());
@@ -48,6 +56,10 @@ public class SearchActor extends AbstractActor {
         );
     }
 
+    /**
+     * receive income message
+     * @return
+     */
     @Override
     public Receive createReceive() {
         return receiveBuilder()
@@ -73,7 +85,10 @@ public class SearchActor extends AbstractActor {
                 .build();
     }
 
-
+    /**
+     * handle query
+     * @param query
+     */
     private void handleSearchQuery(String query) {
 
         receivedVideoIds.clear();
@@ -160,11 +175,19 @@ public class SearchActor extends AbstractActor {
         out.tell(message, self());
     }
 
+    /**
+     * generate word stats
+     * @param query
+     */
     private void handleWordStats(String query) {
         // Create a WordStatsActor to process the word statistics
         ActorRef wordStatsActor = getContext().actorOf(WordStatsActor.props(query, self(), shModel));
     }
 
+    /**
+     * word stats result to front end
+     * @param result
+     */
     private void handleWordStatsResult(WordStatsActor.WordStatsResult result) {
         // Send the word stats back to the client via WebSocket
         ObjectNode message = Json.newObject();
@@ -175,8 +198,10 @@ public class SearchActor extends AbstractActor {
     }
 
 
-
-
+    /**
+     * supervisor
+     * @return
+     */
     @Override
     public SupervisorStrategy supervisorStrategy() {
         return new OneForOneStrategy(
@@ -195,6 +220,10 @@ public class SearchActor extends AbstractActor {
 
 
     }
+
+    /**
+     * send ping for connection
+     */
     private void sendPing() {
         ObjectNode message = Json.newObject();
         message.put("type", "ping");

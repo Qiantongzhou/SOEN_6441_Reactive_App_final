@@ -6,8 +6,16 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * http class
+ */
 public class HttpUrlConnectionClient implements HttpClient {
-
+    /**
+     * http get method form url
+     * @param urlString
+     * @return
+     * @throws Exception
+     */
     @Override
     public String get(String urlString) throws Exception {
         URL url = new URL(urlString);

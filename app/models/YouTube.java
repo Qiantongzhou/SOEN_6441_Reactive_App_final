@@ -48,22 +48,48 @@ public class YouTube {
         this.apiKeys = apiKeys;
     }
 
+    /**
+     * search with max results
+     * @param query
+     * @param maxResults
+     * @return
+     * @throws Exception
+     */
     public JsonNode searchVideos(String query, int maxResults) throws Exception {
         String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
         String url = API_URL + "search?part=snippet&q=" + encodedQuery + "&maxResults=" + maxResults + "&order=date&key=";
         return tryRequestWithFallback(url);
     }
 
+    /**
+     * get channeldetails
+     * @param channelId
+     * @return
+     * @throws Exception
+     */
     public JsonNode getChannelDetails(String channelId) throws Exception {
         String url = API_URL + "channels?part=snippet,statistics&id=" + channelId + "&key=";
         return tryRequestWithFallback(url);
     }
 
+    /**
+     * getvideo by chanel id
+     * @param channelId
+     * @param maxResults
+     * @return
+     * @throws Exception
+     */
     public JsonNode getVideosByChannelId(String channelId, int maxResults) throws Exception {
         String url = API_URL + "search?part=snippet&channelId=" + channelId + "&maxResults=" + maxResults + "&order=date&key=";
         return tryRequestWithFallback(url);
     }
 
+    /**
+     * try each key api
+     * @param urlWithoutKey
+     * @return
+     * @throws Exception
+     */
     private JsonNode tryRequestWithFallback(String urlWithoutKey) throws Exception {
         Exception lastException = null;
 

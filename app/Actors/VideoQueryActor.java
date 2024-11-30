@@ -20,12 +20,22 @@ public class VideoQueryActor extends AbstractActor {
     private final Set<String> sentVideoIds = new HashSet<>();
     Cancellable cancellable;
 
+    /**
+     * init video actor
+     * @param query
+     * @param parent
+     * @param shModel
+     */
     public VideoQueryActor(String query, ActorRef parent, SearchHistoryModel shModel) {
         this.query = query;
         this.parent = parent;
         this.shModel = shModel;
     }
 
+    /**
+     * create receive class
+     * @return
+     */
     @Override
     public Receive createReceive() {
         return receiveBuilder()
@@ -47,12 +57,18 @@ public class VideoQueryActor extends AbstractActor {
         );
     }
 
+    /**
+     * behavior for stop
+     */
     @Override
     public void postStop() {
             cancellable.cancel();
 
     }
 
+    /**
+     * check if we have new incoming video
+     */
     private void checkForNewVideos() {
         List<Video> videos = shModel.queryYoutubeWithNum(query, 10);
         List<Video> newVideos = new ArrayList<>();
@@ -67,5 +83,8 @@ public class VideoQueryActor extends AbstractActor {
         }
     }
 
+    /**
+     * connection check class
+     */
     public static class Tick { }
 }

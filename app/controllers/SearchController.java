@@ -26,6 +26,12 @@ public class SearchController extends Controller {
     private final Materializer materializer;
     private final SearchHistoryModel shModel;
 
+    /**
+     * inject controller
+     * @param actorSystem
+     * @param materializer
+     * @param shModel
+     */
     @Inject
     public SearchController(ActorSystem actorSystem, Materializer materializer, SearchHistoryModel shModel) {
         this.actorSystem = actorSystem;
